@@ -1,10 +1,12 @@
-import { ListObjectsV2Command, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { AwsClient } from "aws4fetch";
 import { currentAdmin, currentUser, type Env } from "../_shared";
 
 const allowed = new Set(["image/jpeg","image/png","image/webp","image/gif","image/avif","video/mp4","video/webm","video/quicktime"]);
 const cleanBase=(value?:string)=>value?.replace(/\/$/,"");
 const safeName=(name:string)=>name.toLowerCase().replace(/[^a-z0-9._-]+/g,"-").replace(/^-+|-+$/g,"")||"image";
-const client=(env:Env)=>new S3Client({region:env.S3_REGION||"auto",endpoint:env.S3_ENDPOINT,forcePathStyle:Boolean(env.S3_ENDPOINT),credentials:{accessKeyId:env.S3_ACCESS_KEY_ID||"",secretAccessKey:env.S3_SECRET_ACCESS_KEY||""}});
+const client=(env:Env)=>new AwsClient({accessKeyId:env.S3_ACCESS_KEY_ID||"",secretAccessKey:env.S3_SECRET_ACCESS_KEY||"",region:env.S3_REGION||"us-east-1",service:"s3"});
+const objectUrl=(env:Env,key="")=>`${env.S3_ENDPOINT?`${cleanBase(env.S3_ENDPOINT)}/${encodeURIComponent(env.S3_BUCKET||"")}`:`https://${env.S3_BUCKET}.s3.${env.S3_REGION}.amazonaws.com`}${key?`/${key.split("/").map(encodeURIComponent).join("/")}`:""}`;
+const xmlValue=(xml:string,tag:string)=>xml.match(new RegExp(`<${tag}>([\\s\\S]*?)</${tag}>`))?.[1]?.replaceAll("&amp;","&").replaceAll("&lt;","<").replaceAll("&gt;",">").replaceAll("&quot;",'"').replaceAll("&apos;","")||"";
 const publicUrl=(env:Env,key:string,origin:string)=>env.STORAGE_PROVIDER==="s3"?`${cleanBase(env.S3_PUBLIC_URL)||`https://${env.S3_BUCKET}.s3.${env.S3_REGION}.amazonaws.com`}/${key}`:`${cleanBase(env.R2_PUBLIC_URL)||`${origin}/api/uploads/file`}/${key}`;
 
 export const onRequestPost:PagesFunction<Env>=async({env,request})=>{
@@ -17,7 +19,8 @@ export const onRequestPost:PagesFunction<Env>=async({env,request})=>{
   const key=`properties/${new Date().toISOString().slice(0,10)}/${crypto.randomUUID()}-${safeName(file.name)}`;
   if(env.STORAGE_PROVIDER==="s3"){
     if(!env.S3_BUCKET||!env.S3_ACCESS_KEY_ID||!env.S3_SECRET_ACCESS_KEY)return Response.json({error:"S3 storage is not configured."},{status:503});
-    await client(env).send(new PutObjectCommand({Bucket:env.S3_BUCKET,Key:key,Body:new Uint8Array(await file.arrayBuffer()),ContentType:file.type,CacheControl:"public, max-age=31536000"}));
+    const uploaded=await client(env).fetch(objectUrl(env,key),{method:"PUT",headers:{"content-type":file.type,"cache-control":"public, max-age=31536000"},body:file.stream()});
+    if(!uploaded.ok)throw new Error(`S3 upload failed (${uploaded.status}): ${(await uploaded.text()).slice(0,300)}`);
   }else{
     if(!env.MEDIA_BUCKET)return Response.json({error:"Cloudflare R2 binding MEDIA_BUCKET is not configured."},{status:503});
     await env.MEDIA_BUCKET.put(key,file.stream(),{httpMetadata:{contentType:file.type,cacheControl:"public, max-age=31536000"},customMetadata:{originalName:file.name}});
@@ -30,8 +33,9 @@ export const onRequestGet:PagesFunction<Env>=async({env,request})=>{
   let objects:{key:string;size:number;uploaded?:Date}[]=[];
   if(env.STORAGE_PROVIDER==="s3"){
     if(!env.S3_BUCKET)return Response.json({items:[]});
-    const result=await client(env).send(new ListObjectsV2Command({Bucket:env.S3_BUCKET,Prefix:"properties/",MaxKeys:60}));
-    objects=(result.Contents||[]).map(x=>({key:x.Key||"",size:x.Size||0,uploaded:x.LastModified}));
+    const listUrl=new URL(objectUrl(env));listUrl.searchParams.set("list-type","2");listUrl.searchParams.set("prefix","properties/");listUrl.searchParams.set("max-keys","60");
+    const listed=await client(env).fetch(listUrl);if(!listed.ok)throw new Error(`S3 list failed (${listed.status}): ${(await listed.text()).slice(0,300)}`);
+    const xml=await listed.text();objects=[...xml.matchAll(/<Contents>([\s\S]*?)<\/Contents>/g)].map(match=>({key:xmlValue(match[1],"Key"),size:Number(xmlValue(match[1],"Size"))||0,uploaded:new Date(xmlValue(match[1],"LastModified"))}));
   }else if(env.MEDIA_BUCKET){
     const result=await env.MEDIA_BUCKET.list({prefix:"properties/",limit:60});
     objects=result.objects.map(x=>({key:x.key,size:x.size,uploaded:x.uploaded}));
