@@ -59,6 +59,19 @@ class AuthRepository {
     await _storage.write(key: _tokenKey, value: token);
   }
 
+  Future<void> signInWithPassword({required String email, required String password, String? name}) async {
+    final registering=name != null;
+    final response=await ApiClient.instance.post(registering?'/api/auth/register':'/api/auth/login', {
+      if(registering)'name':name,
+      'email':email.trim().toLowerCase(),
+      'password':password,
+    }, authenticated:false);
+    token=response['token']?.toString();
+    user=response['user'] as Map<String,dynamic>?;
+    if(token==null)throw const ApiException('The server did not create a session.');
+    await _storage.write(key:_tokenKey,value:token);
+  }
+
   Future<void> logout() async {
     try {
       await ApiClient.instance.post('/api/auth/logout', const {});

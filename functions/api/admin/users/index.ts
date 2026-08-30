@@ -1,2 +1,2 @@
-import {db,json,type Env} from "../../_shared";
-export const onRequestGet:PagesFunction<Env>=async({env})=>{try{const sql=db(env),rows=await sql`SELECT id::text,email,name,avatar_url AS "avatarUrl",role,created_at AS "createdAt",last_login_at AS "lastLoginAt" FROM app_users ORDER BY created_at DESC`;return json({users:rows})}catch(error){console.error("admin.users",error);return json({error:"Unable to load users"},500)}};
+import {currentAdmin,db,json,type Env} from "../../_shared";
+export const onRequestGet:PagesFunction<Env>=async({env,request})=>{try{if(!await currentAdmin(env,request))return json({error:"Administrator access required."},403);const sql=db(env),rows=await sql`SELECT id::text,email,name,avatar_url AS "avatarUrl",role,created_at AS "createdAt",last_login_at AS "lastLoginAt" FROM app_users ORDER BY created_at DESC`;return json({users:rows})}catch(error){console.error("admin.users",error);return json({error:"Unable to load users"},500)}};

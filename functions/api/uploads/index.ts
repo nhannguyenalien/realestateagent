@@ -1,5 +1,5 @@
 import { ListObjectsV2Command, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
-import type { Env } from "../_shared";
+import { currentAdmin, currentUser, type Env } from "../_shared";
 
 const allowed = new Set(["image/jpeg","image/png","image/webp","image/gif","image/avif","video/mp4","video/webm","video/quicktime"]);
 const cleanBase=(value?:string)=>value?.replace(/\/$/,"");
@@ -8,6 +8,7 @@ const client=(env:Env)=>new S3Client({region:env.S3_REGION||"auto",endpoint:env.
 const publicUrl=(env:Env,key:string,origin:string)=>env.STORAGE_PROVIDER==="s3"?`${cleanBase(env.S3_PUBLIC_URL)||`https://${env.S3_BUCKET}.s3.${env.S3_REGION}.amazonaws.com`}/${key}`:`${cleanBase(env.R2_PUBLIC_URL)||`${origin}/api/uploads/file`}/${key}`;
 
 export const onRequestPost:PagesFunction<Env>=async({env,request})=>{
+  if(!await currentUser(env,request))return Response.json({error:"Authentication required."},{status:401});
   const form=await request.formData(),file=form.get("file");
   if(!(file instanceof File))return Response.json({error:"Choose an image to upload."},{status:400});
   if(!allowed.has(file.type))return Response.json({error:"Supported formats: JPG, PNG, WEBP, GIF, AVIF, MP4, WEBM and MOV."},{status:415});
@@ -25,6 +26,7 @@ export const onRequestPost:PagesFunction<Env>=async({env,request})=>{
 };
 
 export const onRequestGet:PagesFunction<Env>=async({env,request})=>{
+  if(!await currentAdmin(env,request))return Response.json({error:"Administrator access required."},{status:403});
   let objects:{key:string;size:number;uploaded?:Date}[]=[];
   if(env.STORAGE_PROVIDER==="s3"){
     if(!env.S3_BUCKET)return Response.json({items:[]});

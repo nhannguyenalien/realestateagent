@@ -16,7 +16,7 @@ export const onRequestPost:PagesFunction<Env>=async({env,request})=>{
   const email=profile.email.toLowerCase(),role=admins.includes(email)?"admin":"agent",sql=db(env);
   const users=await sql`INSERT INTO app_users (google_sub,email,name,avatar_url,role,last_login_at)
     VALUES (${profile.sub},${email},${profile.name||email},${profile.picture||null},${role},NOW())
-    ON CONFLICT (google_sub) DO UPDATE SET email=EXCLUDED.email,name=EXCLUDED.name,avatar_url=EXCLUDED.avatar_url,
+    ON CONFLICT (email) DO UPDATE SET google_sub=EXCLUDED.google_sub,name=EXCLUDED.name,avatar_url=EXCLUDED.avatar_url,
       role=CASE WHEN EXCLUDED.role='admin' THEN 'admin' ELSE app_users.role END,last_login_at=NOW()
     RETURNING id::text,email,name,avatar_url AS "avatarUrl",role`;
   await sql`INSERT INTO agents(user_id,name,email,avatar_url) VALUES (${users[0].id}::uuid,${users[0].name},${email},${users[0].avatarUrl||null})

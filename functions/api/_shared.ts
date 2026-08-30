@@ -46,5 +46,23 @@ export async function currentUser(env: Env, request: Request) {
     WHERE s.token_hash=${hash} AND s.expires_at>NOW() LIMIT 1`;
   return rows[0] || null;
 }
+export async function currentAdmin(env:Env,request:Request){const user=await currentUser(env,request);return user?.role==="admin"?user:null}
 export async function sha256(value: string) { const bytes=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(value)); return [...new Uint8Array(bytes)].map(byte=>byte.toString(16).padStart(2,"0")).join("") }
 export function randomToken(bytes=32){const data=crypto.getRandomValues(new Uint8Array(bytes));return btoa(String.fromCharCode(...data)).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/g,"")}
+
+const PASSWORD_ITERATIONS=210000;
+const encoder=new TextEncoder();
+const bytesToBase64=(bytes:Uint8Array)=>btoa(String.fromCharCode(...bytes));
+const base64ToBytes=(value:string)=>Uint8Array.from(atob(value),char=>char.charCodeAt(0));
+async function derivePassword(password:string,salt:Uint8Array,iterations:number){
+  const key=await crypto.subtle.importKey("raw",encoder.encode(password),"PBKDF2",false,["deriveBits"]);
+  return new Uint8Array(await crypto.subtle.deriveBits({name:"PBKDF2",hash:"SHA-256",salt:new Uint8Array(salt),iterations},key,256));
+}
+export async function hashPassword(password:string){const salt=crypto.getRandomValues(new Uint8Array(16));return{hash:bytesToBase64(await derivePassword(password,salt,PASSWORD_ITERATIONS)),salt:bytesToBase64(salt),iterations:PASSWORD_ITERATIONS}}
+export async function verifyPassword(password:string,expected:string,salt:string,iterations:number){
+  const actual=await derivePassword(password,base64ToBytes(salt),iterations),wanted=base64ToBytes(expected);
+  if(actual.length!==wanted.length)return false;
+  let mismatch=0;for(let i=0;i<actual.length;i++)mismatch|=actual[i]^wanted[i];return mismatch===0;
+}
+export async function createSession(env:Env,userId:string){const sql=db(env),token=randomToken(48);await sql`INSERT INTO user_sessions(user_id,token_hash,expires_at) VALUES (${userId}::uuid,${await sha256(token)},NOW()+INTERVAL '30 days')`;return token}
+export function sessionCookie(token:string,request:Request){const secure=new URL(request.url).protocol==="https:"?"; Secure":"";return `estatein_session=${token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=2592000${secure}`}

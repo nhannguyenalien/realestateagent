@@ -135,6 +135,10 @@ class _AuthScreenState extends State<AuthScreen> {
   bool hidden = true;
   bool loading = false;
   final formKey = GlobalKey<FormState>();
+  final nameController=TextEditingController(),emailController=TextEditingController(),passwordController=TextEditingController();
+
+  @override
+  void dispose(){nameController.dispose();emailController.dispose();passwordController.dispose();super.dispose();}
 
   Future<void> google() async {
     setState(() => loading = true);
@@ -160,13 +164,13 @@ class _AuthScreenState extends State<AuthScreen> {
 
   Future<void> submit() async {
     if (!(formKey.currentState?.validate() ?? false)) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Email/password authentication is not enabled. Continue with Google.',
-        ),
-      ),
-    );
+    setState(()=>loading=true);
+    try{
+      await AuthRepository.instance.signInWithPassword(email:emailController.text,password:passwordController.text,name:widget.login?null:nameController.text.trim());
+      if(mounted)widget.onAuthenticated();
+    }on ApiException catch(error){if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(error.message)));}
+    catch(_){if(mounted)ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('Unable to authenticate. Please try again.')));}
+    finally{if(mounted)setState(()=>loading=false);}
   }
 
   @override
@@ -211,6 +215,7 @@ class _AuthScreenState extends State<AuthScreen> {
                 const SizedBox(height: 22),
                 if (!widget.login) ...[
                   TextFormField(
+                    controller: nameController,
                     decoration: const InputDecoration(
                       prefixIcon: Icon(Icons.person_outline),
                       hintText: 'Full name',
@@ -221,6 +226,7 @@ class _AuthScreenState extends State<AuthScreen> {
                   const SizedBox(height: 12),
                 ],
                 TextFormField(
+                  controller: emailController,
                   keyboardType: TextInputType.emailAddress,
                   decoration: const InputDecoration(
                     prefixIcon: Icon(Icons.email_outlined),
@@ -231,6 +237,7 @@ class _AuthScreenState extends State<AuthScreen> {
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
+                  controller: passwordController,
                   obscureText: hidden,
                   decoration: InputDecoration(
                     prefixIcon: const Icon(Icons.lock_outline),
@@ -244,8 +251,12 @@ class _AuthScreenState extends State<AuthScreen> {
                       ),
                     ),
                   ),
-                  validator: (v) =>
-                      (v ?? '').length < 6 ? 'Use at least 6 characters' : null,
+                  validator: (v) {
+                    final value=v??'';
+                    if(value.length<8)return 'Use at least 8 characters';
+                    if(!RegExp(r'[A-Za-z]').hasMatch(value)||!RegExp(r'[0-9]').hasMatch(value))return 'Include a letter and number';
+                    return null;
+                  },
                 ),
                 const SizedBox(height: 20),
                 SizedBox(
