@@ -50,7 +50,8 @@ export async function currentAdmin(env:Env,request:Request){const user=await cur
 export async function sha256(value: string) { const bytes=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(value)); return [...new Uint8Array(bytes)].map(byte=>byte.toString(16).padStart(2,"0")).join("") }
 export function randomToken(bytes=32){const data=crypto.getRandomValues(new Uint8Array(bytes));return btoa(String.fromCharCode(...data)).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/g,"")}
 
-const PASSWORD_ITERATIONS=210000;
+// Cloudflare Workers WebCrypto currently caps PBKDF2 at 100,000 iterations.
+const PASSWORD_ITERATIONS=100000;
 const encoder=new TextEncoder();
 const bytesToBase64=(bytes:Uint8Array)=>btoa(String.fromCharCode(...bytes));
 const base64ToBytes=(value:string)=>Uint8Array.from(atob(value),char=>char.charCodeAt(0));
