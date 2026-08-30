@@ -1,0 +1,2 @@
+import {sessionToken,db,sha256,type Env} from "../_shared";
+export const onRequestPost:PagesFunction<Env>=async({env,request})=>{const token=sessionToken(request);if(token){const sql=db(env);await sql`DELETE FROM user_sessions WHERE token_hash=${await sha256(token)}`}return new Response(JSON.stringify({ok:true}),{headers:{"content-type":"application/json","set-cookie":"estatein_session=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0"}})};

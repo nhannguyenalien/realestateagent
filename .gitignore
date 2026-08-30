@@ -1,0 +1,13 @@
+node_modules
+.next
+out
+.wrangler
+.DS_Store
+tmp/
+.env*
+!.env.example
+.dev.vars
+*.tsbuildinfo
+mobile/android/key.properties
+mobile/android/app/*.jks
+mobile/android/app/*.keystore

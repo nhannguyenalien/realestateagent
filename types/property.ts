@@ -1,0 +1,22 @@
+export type Property = {
+  id: string;
+  slug: string;
+  title: string;
+  description: string;
+  price: number;
+  currency: string;
+  bedrooms: number;
+  bathrooms: number;
+  propertyType: string;
+  imageUrl: string;
+  images?: string[];
+  videoUrl?: string;
+  city?: string;
+  region?: string;
+  address?: string;
+  areaSqm?: number;
+  latitude?: number;
+  longitude?: number;
+  amenities?: string[];
+  agent?: { id: string; name: string; role: string; phone: string; email: string; avatarUrl: string };
+};
