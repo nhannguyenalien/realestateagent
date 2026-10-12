@@ -1,0 +1,2 @@
+# Listings created after build have no pre-rendered page: serve the shared detail shell; it loads the listing by URL slug.
+/properties/* /properties/demo-nearby-hcm-1/ 200
