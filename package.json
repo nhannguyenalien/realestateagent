@@ -7,7 +7,10 @@
     "build": "next build",
     "pages:dev": "npm run build && wrangler pages dev out",
     "deploy": "npm run build && wrangler pages deploy out",
-    "typecheck": "tsc --noEmit"
+    "cron:dev": "wrangler dev --config wrangler.cron.jsonc --test-scheduled",
+    "cron:deploy": "wrangler deploy --config wrangler.cron.jsonc",
+    "typecheck": "tsc --noEmit",
+    "openapi": "node scripts/generate-openapi.mjs"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.1",

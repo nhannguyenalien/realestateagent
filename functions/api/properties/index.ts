@@ -1,3 +1,4 @@
+import {safeVideoUrl} from "../../../lib/property-media";
 import { currentUser, db, json, type Env } from "../_shared";
 
 export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
@@ -8,7 +9,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
     const bedrooms=Number(url.searchParams.get("bedrooms"))||0, minPrice=Number(url.searchParams.get("minPrice"))||0, maxPrice=Number(url.searchParams.get("maxPrice"))||0;
     const sql = db(env);
     const rows = await sql`
-      SELECT id::text, slug, title, description, price::float8 AS price, currency,
+      SELECT id::text, slug, to_jsonb(properties)->>'video_url' AS "videoUrl", title, description, price::float8 AS price, currency,
              bedrooms, bathrooms, property_type AS "propertyType",
              COALESCE(primary_image_url, '/assets/figma/property-1.png') AS "imageUrl", city, region, address_line AS address,
              area_sqm::float8 AS "areaSqm", latitude::float8, longitude::float8
@@ -46,10 +47,10 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
     if (!agents[0]) return json({ error: "Create an agent profile before posting a property." }, 409);
     const rows = await sql`
       INSERT INTO properties (slug, title, description, price, currency, bedrooms, bathrooms,
-        property_type, primary_image_url, city, region, address_line, area_sqm, latitude, longitude, status, agent_id)
+        property_type, video_url, primary_image_url, city, region, address_line, area_sqm, latitude, longitude, status, agent_id)
       VALUES (${slug}, ${title}, ${textValue(body.description, 5000)}, ${price}, ${textValue(body.currency, 3) || "USD"},
         ${numberValue(body.bedrooms)}, ${numberValue(body.bathrooms)}, ${textValue(body.propertyType, 50) || "Apartment"},
-        ${textValue(body.imageUrl, 1000) || "/assets/figma/property-1.png"}, ${city}, ${textValue(body.region, 100)},
+        ${safeVideoUrl(body.videoUrl)||null}, ${textValue(body.imageUrl, 1000) || "/assets/figma/property-1.png"}, ${city}, ${textValue(body.region, 100)},
         ${textValue(body.address, 240)}, ${area}, ${numberValue(body.latitude) || null}, ${numberValue(body.longitude) || null}, 'draft', ${agents[0].id}::uuid)
       RETURNING id::text, slug
     `;

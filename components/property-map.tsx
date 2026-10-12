@@ -1,20 +1,65 @@
 "use client";
 
-import { divIcon } from "leaflet";
-import { useState } from "react";
-import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
+import { divIcon, icon } from "leaflet";
+import { useMemo, useState } from "react";
+import { MapContainer, Marker, Popup, TileLayer, useMapEvents } from "react-leaflet";
 import type { Property } from "@/types/property";
 import { useLanguage } from "./language-provider";
 
+const propertyMarkerIcon = icon({
+  iconUrl: "/assets/brand/map-marker.png",
+  iconSize: [38, 38],
+  iconAnchor: [19, 36],
+  popupAnchor: [0, -34],
+  className: "propertyMarkerIcon",
+});
+
 export default function PropertyMap({ properties, onSelect }: { properties: Property[]; onSelect?: (property: Property) => void }) {
-  const located = properties.filter((p) => p.latitude && p.longitude);
-  const center: [number, number] = located.length ? [located[0].latitude!, located[0].longitude!] : [16.05, 108.2];
+  const located = properties.filter(property => property.latitude != null && property.longitude != null && Number.isFinite(property.latitude) && Number.isFinite(property.longitude) && Math.abs(property.latitude)<=90 && Math.abs(property.longitude)<=180).map(property => ({
+    property, coordinates: [property.latitude!, property.longitude!] as [number,number],
+  }));
+  const center: [number, number] = located.length ? located[0].coordinates : [16.05, 108.2];
   return <MapContainer className="propertyMap" center={center} zoom={6} scrollWheelZoom>
     <TileLayer attribution='&copy; OpenStreetMap contributors' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-    {located.map((p) => <Marker key={p.id} position={[p.latitude!, p.longitude!]} icon={divIcon({ className:"mapPriceMarker", html:`$${Math.round(p.price/1000)}k`, iconSize:[58,32], iconAnchor:[29,32] })}>
-      <Popup maxWidth={270} minWidth={230} autoPan><MapPopupCard property={p} onSelect={onSelect}/></Popup>
-    </Marker>)}
+    <ClusteredPropertyMarkers located={located} onSelect={onSelect}/>
   </MapContainer>;
+}
+
+type LocatedProperty = {property: Property; coordinates: [number, number]};
+
+function ClusteredPropertyMarkers({located, onSelect}: {located: LocatedProperty[]; onSelect?: (property: Property) => void}) {
+  const [zoom, setZoom] = useState(6);
+  const map = useMapEvents({
+    zoomend: () => setZoom(map.getZoom()),
+  });
+  const groups = useMemo(() => {
+    if (zoom >= 15) return located.map(item => ({items: [item], coordinates: item.coordinates}));
+    const cellSize = 360 / (2 ** zoom) * .24;
+    const cells = new Map<string, LocatedProperty[]>();
+    for (const item of located) {
+      const key = `${Math.floor(item.coordinates[0] / cellSize)}:${Math.floor(item.coordinates[1] / cellSize)}`;
+      cells.set(key, [...(cells.get(key) || []), item]);
+    }
+    return [...cells.values()].map(items => ({
+      items,
+      coordinates: [
+        items.reduce((sum, item) => sum + item.coordinates[0], 0) / items.length,
+        items.reduce((sum, item) => sum + item.coordinates[1], 0) / items.length,
+      ] as [number, number],
+    }));
+  }, [located, zoom]);
+
+  return groups.map(({items, coordinates}) => items.length === 1
+    ? <Marker key={items[0].property.id} position={coordinates} icon={propertyMarkerIcon}>
+        <Popup maxWidth={270} minWidth={230} autoPan><MapPopupCard property={items[0].property} onSelect={onSelect}/></Popup>
+      </Marker>
+    : <Marker
+        key={items.map(item => item.property.id).join(":")}
+        position={coordinates}
+        icon={divIcon({className: "propertyClusterIcon", html: `<span>${items.length}</span>`, iconSize: [42, 42], iconAnchor: [21, 21]})}
+        eventHandlers={{click: () => map.setView(coordinates, Math.min(zoom + 2, 18))}}
+      />
+  );
 }
 
 function MapPopupCard({property:p,onSelect}:{property:Property;onSelect?: (property:Property)=>void}){

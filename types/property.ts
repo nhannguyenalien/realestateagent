@@ -1,4 +1,6 @@
 export type Property = {
+  distanceKm?: number;
+  isDemo?: boolean;
   id: string;
   slug: string;
   title: string;
@@ -18,5 +20,5 @@ export type Property = {
   latitude?: number;
   longitude?: number;
   amenities?: string[];
-  agent?: { id: string; name: string; role: string; phone: string; email: string; avatarUrl: string };
+  agent?: { id: string; name: string; role: string; phone: string; email: string; avatarUrl: string; agencyId?:string; agencySlug?:string; agencyName?:string };
 };

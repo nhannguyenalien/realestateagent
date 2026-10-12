@@ -14,6 +14,14 @@ export type Env = {
   S3_ACCESS_KEY_ID?: string;
   S3_SECRET_ACCESS_KEY?: string;
   S3_PUBLIC_URL?: string;
+  SCHOOLSAI_SYSTEM_API_KEY?: string;
+  SCHOOLSAI_TOOL_SECRET?: string;
+  MCP_API_KEY?: string;
+  CRON_SECRET?: string;
+  EXTERNAL_PROPERTY_FEEDS?: string;
+  RESEND_API_KEY?: string;
+  ALERT_FROM_EMAIL?: string;
+  PUBLIC_SITE_URL?: string;
 };
 
 export function db(env: Env) {
@@ -50,6 +58,13 @@ export async function currentAdmin(env:Env,request:Request){const user=await cur
 export async function sha256(value: string) { const bytes=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(value)); return [...new Uint8Array(bytes)].map(byte=>byte.toString(16).padStart(2,"0")).join("") }
 export function randomToken(bytes=32){const data=crypto.getRandomValues(new Uint8Array(bytes));return btoa(String.fromCharCode(...data)).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/g,"")}
 
+const schoolApiBase="https://apic.schoolsai.work";
+export async function schoolsAiChat(apiKey:string,body:unknown){
+  const response=await fetch(`${schoolApiBase}/api/v1/marketplace-chat`,{method:"POST",headers:{authorization:`Bearer ${apiKey}`,"content-type":"application/json"},body:JSON.stringify(body)});
+  const data:Record<string,unknown>=await response.json<Record<string,unknown>>().catch(()=>({}));
+  if(!response.ok)throw new Error(typeof data.error==="string"?data.error:`SchoolsAI returned ${response.status}`);
+  return data;
+}
 // Cloudflare Workers WebCrypto currently caps PBKDF2 at 100,000 iterations.
 const PASSWORD_ITERATIONS=100000;
 const encoder=new TextEncoder();

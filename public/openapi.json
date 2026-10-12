@@ -1,0 +1,2879 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Estatein Real Estate API",
+    "version": "1.0.0",
+    "description": "REST API of the Estatein real estate platform (Cloudflare Pages Functions). All responses are JSON with `cache-control: no-store`. Endpoints are served under `/api/`. A read-only MCP server is available at `/mcp` (see the README)."
+  },
+  "servers": [
+    {
+      "url": "/",
+      "description": "Same origin"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Properties"
+    },
+    {
+      "name": "Directory"
+    },
+    {
+      "name": "Leads & alerts"
+    },
+    {
+      "name": "Auth"
+    },
+    {
+      "name": "Viewings"
+    },
+    {
+      "name": "Agent"
+    },
+    {
+      "name": "Admin"
+    },
+    {
+      "name": "Uploads"
+    },
+    {
+      "name": "AI"
+    },
+    {
+      "name": "Internal"
+    }
+  ],
+  "paths": {
+    "/api/properties/": {
+      "get": {
+        "tags": [
+          "Properties"
+        ],
+        "summary": "List published properties",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "description": "Matches title, city and region.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "description": "Exact property type.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "bedrooms",
+            "in": "query",
+            "description": "Minimum bedrooms.",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "minPrice",
+            "in": "query",
+            "description": "Minimum price.",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "maxPrice",
+            "in": "query",
+            "description": "Maximum price.",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "1-24, default 12.",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Properties.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "properties": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Property"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Properties"
+        ],
+        "summary": "Create a draft property",
+        "description": "Requires a session and an agent profile. The listing is created with status `draft`.",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PropertyInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "property": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "slug": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "No agent profile.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/properties/{slug}/": {
+      "get": {
+        "tags": [
+          "Properties"
+        ],
+        "summary": "Get a published property",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Property with images, amenities and agent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "property": {
+                      "$ref": "#/components/schemas/PropertyDetail"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/agencies/": {
+      "get": {
+        "tags": [
+          "Directory"
+        ],
+        "summary": "List agencies",
+        "responses": {
+          "200": {
+            "description": "Agencies.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "agencies": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Agency"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/agents/": {
+      "get": {
+        "tags": [
+          "Directory"
+        ],
+        "summary": "List agents",
+        "responses": {
+          "200": {
+            "description": "Agents.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "agents": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Agent"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/leads/": {
+      "post": {
+        "tags": [
+          "Leads & alerts"
+        ],
+        "summary": "Submit an enquiry",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "email"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 2
+                  },
+                  "firstName": {
+                    "type": "string"
+                  },
+                  "lastName": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "phone": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "propertyId": {
+                    "type": "string",
+                    "format": "uuid"
+                  }
+                },
+                "description": "Provide `name` or `firstName`/`lastName`."
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Saved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "id": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/newsletter/": {
+      "post": {
+        "tags": [
+          "Leads & alerts"
+        ],
+        "summary": "Subscribe to the newsletter",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "email"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Subscribed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid email.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/saved-searches/": {
+      "post": {
+        "tags": [
+          "Leads & alerts"
+        ],
+        "summary": "Create a daily property alert",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "email"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "location": {
+                    "type": "string"
+                  },
+                  "propertyType": {
+                    "type": "string"
+                  },
+                  "minPrice": {
+                    "type": "number"
+                  },
+                  "maxPrice": {
+                    "type": "number"
+                  },
+                  "minBedrooms": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Leads & alerts"
+        ],
+        "summary": "Look up an alert by unsubscribe token",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "query",
+            "description": "Unsubscribe token.",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Alert.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Leads & alerts"
+        ],
+        "summary": "Delete an alert (unsubscribe)",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "query",
+            "description": "Unsubscribe token.",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Deleted.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/register/": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Register with email and password",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "email",
+                  "password"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "password": {
+                    "type": "string",
+                    "format": "password"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Registered; sets the `estatein_session` cookie and returns the token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "token": {
+                      "type": "string"
+                    },
+                    "user": {
+                      "$ref": "#/components/schemas/User"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Email already registered.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/login/": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Log in with email and password",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "email",
+                  "password"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "password": {
+                    "type": "string",
+                    "format": "password"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Sets the `estatein_session` cookie.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "user": {
+                      "$ref": "#/components/schemas/User"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/logout/": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Log out",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Session removed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/me/": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Current user",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "user": {
+                      "$ref": "#/components/schemas/User"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "user": {
+                      "type": "null"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/google/": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Start Google OAuth (browser redirect)",
+        "parameters": [
+          {
+            "name": "returnTo",
+            "in": "query",
+            "description": "Local path to return to after sign-in.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Redirect to Google."
+          },
+          "503": {
+            "description": "Not configured."
+          }
+        }
+      }
+    },
+    "/api/auth/google/callback/": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Google OAuth callback",
+        "description": "Used by Google only.",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "query",
+            "description": "Authorization code.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "description": "OAuth state.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Redirect to the dashboard or `/login/?error=…`."
+          }
+        }
+      }
+    },
+    "/api/auth/mobile/google/": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Exchange a Google ID token (mobile app)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "idToken"
+                ],
+                "properties": {
+                  "idToken": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Session token for use as a Bearer token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Not configured.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/viewings/": {
+      "get": {
+        "tags": [
+          "Viewings"
+        ],
+        "summary": "List my viewing appointments",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Viewings.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "viewings": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Viewings"
+        ],
+        "summary": "Book a viewing",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "propertyId",
+                  "startsAt"
+                ],
+                "properties": {
+                  "propertyId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "startsAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "phone": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "viewing": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Property not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/agent/properties/": {
+      "get": {
+        "tags": [
+          "Agent"
+        ],
+        "summary": "List my properties",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Properties.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Agent"
+        ],
+        "summary": "Create a property",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PropertyInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/agent/properties/{id}/": {
+      "patch": {
+        "tags": [
+          "Agent"
+        ],
+        "summary": "Update one of my properties",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid status.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/agent/leads/": {
+      "get": {
+        "tags": [
+          "Agent"
+        ],
+        "summary": "Leads assigned to me",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Leads.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "leads": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Lead"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/overview/": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Dashboard statistics",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Stats, trend, activity.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Administrator access required.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/properties/": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "List all properties",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "description": "Search text.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Status filter.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page (default 1).",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "1-100, default 20.",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paged properties.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "properties": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    },
+                    "pagination": {
+                      "type": "object",
+                      "properties": {
+                        "page": {
+                          "type": "integer"
+                        },
+                        "limit": {
+                          "type": "integer"
+                        },
+                        "total": {
+                          "type": "integer"
+                        },
+                        "pages": {
+                          "type": "integer"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Administrator access required.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/properties/{id}/": {
+      "patch": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Change status or featured flag",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string"
+                  },
+                  "featured": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Administrator access required.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/leads/": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "List leads",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Status filter.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Max 200, default 100.",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Leads.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "leads": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Lead"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Administrator access required.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/agents/": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "List agents with counts",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Agents.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Administrator access required.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/users/": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "List users",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Users.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "users": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/User"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Administrator access required.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/uploads/": {
+      "post": {
+        "tags": [
+          "Uploads"
+        ],
+        "summary": "Upload an image or video",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "file"
+                ],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "JPG/PNG/WEBP/GIF/AVIF ≤ 10 MB, MP4/WEBM/MOV ≤ 100 MB."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Stored file.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "key": {
+                      "type": "string"
+                    },
+                    "url": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "size": {
+                      "type": "integer"
+                    },
+                    "type": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "No file.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Too large.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Unsupported type.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Uploads"
+        ],
+        "summary": "List recent uploads",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Uploads.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Administrator access required.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/uploads/file/{path}": {
+      "get": {
+        "tags": [
+          "Uploads"
+        ],
+        "summary": "Download an uploaded file (R2)",
+        "parameters": [
+          {
+            "name": "path",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "allowReserved": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "File bytes."
+          },
+          "404": {
+            "description": "Not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ai/chat/": {
+      "post": {
+        "tags": [
+          "AI"
+        ],
+        "summary": "Chat with the property advisor",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "messages"
+                ],
+                "properties": {
+                  "messages": {
+                    "type": "array",
+                    "maxItems": 20,
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "role",
+                        "content"
+                      ],
+                      "properties": {
+                        "role": {
+                          "enum": [
+                            "user",
+                            "assistant"
+                          ]
+                        },
+                        "content": {
+                          "type": "string",
+                          "maxLength": 4000
+                        }
+                      }
+                    },
+                    "description": "The last message must be from the user."
+                  },
+                  "scope": {
+                    "enum": [
+                      "system",
+                      "agency"
+                    ]
+                  },
+                  "session": {
+                    "type": "string"
+                  },
+                  "propertySlug": {
+                    "type": "string"
+                  },
+                  "language": {
+                    "enum": [
+                      "en",
+                      "ja",
+                      "fr",
+                      "es",
+                      "vi"
+                    ]
+                  },
+                  "location": {
+                    "type": "object",
+                    "properties": {
+                      "latitude": {
+                        "type": "number"
+                      },
+                      "longitude": {
+                        "type": "number"
+                      },
+                      "radiusKm": {
+                        "type": "number"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Reply with property cards.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ai/conversations/": {
+      "get": {
+        "tags": [
+          "AI"
+        ],
+        "summary": "My 100 most recent conversations",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Conversations.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "conversations": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "AI"
+        ],
+        "summary": "Save a conversation",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "id",
+                  "title",
+                  "context",
+                  "messages"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "title": {
+                    "type": "string",
+                    "maxLength": 160
+                  },
+                  "context": {
+                    "type": "object",
+                    "properties": {
+                      "scope": {
+                        "enum": [
+                          "system",
+                          "agency"
+                        ]
+                      }
+                    }
+                  },
+                  "messages": {
+                    "type": "array",
+                    "maxItems": 500,
+                    "items": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Saved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid conversation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Too large.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ai/properties/": {
+      "get": {
+        "tags": [
+          "Internal"
+        ],
+        "summary": "Private listing search for the AI provider",
+        "description": "Authenticated with `Authorization: Bearer $SCHOOLSAI_TOOL_SECRET`. Pass `id` (UUID or slug) to fetch one listing instead of searching.",
+        "security": [
+          {
+            "toolSecret": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "description": "Property id or slug; ignores the other filters.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "keyword",
+            "in": "query",
+            "description": "Free text (aliases: query, q).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "location",
+            "in": "query",
+            "description": "City, region or address fragment.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "property_type",
+            "in": "query",
+            "description": "Property type (alias: type).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "agency_slug",
+            "in": "query",
+            "description": "Agency slug.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "min_price",
+            "in": "query",
+            "description": "Minimum price (aliases: price_min, minPrice).",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "max_price",
+            "in": "query",
+            "description": "Maximum price (aliases: price_max, maxPrice).",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "min_bedrooms",
+            "in": "query",
+            "description": "Minimum bedrooms (aliases: bedrooms_min, bedrooms).",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "min_bathrooms",
+            "in": "query",
+            "description": "Minimum bathrooms (aliases: bathrooms_min, bathrooms).",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "min_area_sqm",
+            "in": "query",
+            "description": "Minimum area (alias: area_min).",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "max_area_sqm",
+            "in": "query",
+            "description": "Maximum area (alias: area_max).",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "latitude",
+            "in": "query",
+            "description": "Nearby search centre; requires longitude.",
+            "schema": {
+              "type": "number",
+              "minimum": -90,
+              "maximum": 90
+            }
+          },
+          {
+            "name": "longitude",
+            "in": "query",
+            "description": "Nearby search centre; requires latitude.",
+            "schema": {
+              "type": "number",
+              "minimum": -180,
+              "maximum": 180
+            }
+          },
+          {
+            "name": "radius_km",
+            "in": "query",
+            "description": "Nearby radius in km (default 5).",
+            "schema": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "currency",
+            "in": "query",
+            "description": "ISO currency code filter (nearby search only).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Max results, 1-20 (default 8).",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Results.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "properties": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    },
+                    "count": {
+                      "type": "integer"
+                    },
+                    "center": {
+                      "type": "object"
+                    },
+                    "distanceUnit": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid location.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (id lookup).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cron/daily-property-search/": {
+      "post": {
+        "tags": [
+          "Internal"
+        ],
+        "summary": "Run the daily alert matching job",
+        "description": "Called by the cron Worker with `Authorization: Bearer $CRON_SECRET`.",
+        "security": [
+          {
+            "cronSecret": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Job summary.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/mcp": {
+      "post": {
+        "tags": [
+          "Internal"
+        ],
+        "summary": "Model Context Protocol server",
+        "description": "Stateless MCP over Streamable HTTP (JSON-RPC 2.0). Tools: `search_properties`, `get_property`, `list_agencies`, `list_agents`. Requires `Authorization: Bearer $MCP_API_KEY`; returns 503 while `MCP_API_KEY` is unset.",
+        "security": [
+          {
+            "mcpKey": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "jsonrpc",
+                  "method"
+                ],
+                "properties": {
+                  "jsonrpc": {
+                    "const": "2.0"
+                  },
+                  "id": {
+                    "type": [
+                      "string",
+                      "integer",
+                      "null"
+                    ]
+                  },
+                  "method": {
+                    "type": "string",
+                    "examples": [
+                      "initialize",
+                      "tools/list",
+                      "tools/call"
+                    ]
+                  },
+                  "params": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "JSON-RPC response (or array for batches).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "Notification accepted."
+          },
+          "401": {
+            "description": "Unauthorized.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Only POST is supported."
+          },
+          "503": {
+            "description": "MCP_API_KEY not configured.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "sessionCookie": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "estatein_session",
+        "description": "Set by login, registration and Google sign-in."
+      },
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Session token (mobile app)."
+      },
+      "toolSecret": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "SCHOOLSAI_TOOL_SECRET"
+      },
+      "cronSecret": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "CRON_SECRET"
+      },
+      "mcpKey": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "MCP_API_KEY"
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "error"
+        ]
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "avatarUrl": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "role": {
+            "enum": [
+              "admin",
+              "agent",
+              "user"
+            ]
+          }
+        }
+      },
+      "Property": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "price": {
+            "type": "number"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "bedrooms": {
+            "type": "integer"
+          },
+          "bathrooms": {
+            "type": "integer"
+          },
+          "propertyType": {
+            "type": "string"
+          },
+          "imageUrl": {
+            "type": "string"
+          },
+          "videoUrl": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "city": {
+            "type": "string"
+          },
+          "region": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string"
+          },
+          "areaSqm": {
+            "type": "number"
+          },
+          "latitude": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "longitude": {
+            "type": [
+              "number",
+              "null"
+            ]
+          }
+        }
+      },
+      "PropertyDetail": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Property"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "images": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "amenities": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "agent": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "phone": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string"
+                  },
+                  "avatarUrl": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "agencyId": {
+                    "type": "string"
+                  },
+                  "agencySlug": {
+                    "type": "string"
+                  },
+                  "agencyName": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "PropertyInput": {
+        "type": "object",
+        "required": [
+          "title",
+          "city",
+          "price",
+          "areaSqm"
+        ],
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 140
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 5000
+          },
+          "price": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "currency": {
+            "type": "string",
+            "maxLength": 3,
+            "default": "USD"
+          },
+          "bedrooms": {
+            "type": "integer"
+          },
+          "bathrooms": {
+            "type": "integer"
+          },
+          "propertyType": {
+            "type": "string",
+            "default": "Apartment"
+          },
+          "videoUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "imageUrl": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "region": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string"
+          },
+          "areaSqm": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "latitude": {
+            "type": "number"
+          },
+          "longitude": {
+            "type": "number"
+          }
+        }
+      },
+      "Agency": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "logoUrl": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "phone": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "email": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "website": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "city": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "region": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "agentCount": {
+            "type": "integer"
+          },
+          "listingCount": {
+            "type": "integer"
+          }
+        }
+      },
+      "Agent": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "phone": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "avatarUrl": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "bio": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "agencyId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "agency": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "listingCount": {
+            "type": "integer"
+          }
+        }
+      },
+      "Lead": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "phone": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "source": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "property": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "propertySlug": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      }
+    }
+  }
+}
