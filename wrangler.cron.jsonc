@@ -5,6 +5,6 @@
   "compatibility_date": "2025-08-23",
   "triggers": { "crons": ["0 1 * * *"] },
   "vars": {
-    "DAILY_SEARCH_URL": "https://your-domain.example/api/cron/daily-property-search/"
+    "DAILY_SEARCH_URL": "https://realestate.schoolsai.work/api/cron/daily-property-search/"
   }
 }

@@ -6,3 +6,9 @@ export const onRequestPatch:PagesFunction<Env>=async({env,request,params})=>{try
   const rows=await db(env)`UPDATE leads l SET status=${body.status}::lead_status,updated_at=NOW() FROM agents a WHERE l.id=${String(params.id)}::uuid AND a.user_id=${user.id}::uuid AND a.id=COALESCE(l.assigned_agent_id,(SELECT agent_id FROM properties WHERE id=l.property_id)) RETURNING l.id::text,l.status`;
   return rows[0]?json({lead:rows[0]}):json({error:"Lead not found."},404);
 }catch(error){console.error("agent.lead.update",error);return json({error:"Unable to update lead."},500)}};
+
+export const onRequestDelete:PagesFunction<Env>=async({env,request,params})=>{try{
+  const user=await currentUser(env,request);if(!user)return json({error:"Authentication required."},401);
+  const rows=await db(env)`DELETE FROM leads l USING agents a WHERE l.id=${String(params.id)}::uuid AND a.user_id=${user.id}::uuid AND a.id=COALESCE(l.assigned_agent_id,(SELECT agent_id FROM properties WHERE id=l.property_id)) RETURNING l.id::text`;
+  return rows[0]?json({ok:true}):json({error:"Lead not found."},404);
+}catch(error){console.error("agent.lead.delete",error);return json({error:"Unable to delete lead."},500)}};
