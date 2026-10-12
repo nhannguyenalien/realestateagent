@@ -2,7 +2,7 @@ import {currentUser,db,ensureAgent,json,type Env} from "../../_shared";
 
 export const onRequestGet:PagesFunction<Env>=async({env,request})=>{try{
   const user=await currentUser(env,request);if(!user)return json({error:"Authentication required."},401);
-  const sql=db(env),rows=await sql`SELECT p.id::text,p.slug,p.title,p.description,p.status,p.property_type AS "propertyType",p.price::float8 AS price,p.currency,p.bedrooms,p.bathrooms,p.area_sqm::float8 AS "areaSqm",p.address_line AS address,p.city,p.region,p.primary_image_url AS "imageUrl",p.latitude::float8 AS latitude,p.longitude::float8 AS longitude,p.created_at AS "createdAt",p.updated_at AS "updatedAt" FROM properties p JOIN agents a ON a.id=p.agent_id WHERE a.user_id=${user.id}::uuid ORDER BY p.updated_at DESC`;
+  const sql=db(env),rows=await sql`SELECT p.id::text,p.slug,p.title,p.description,p.status,p.property_type AS "propertyType",p.price::float8 AS price,p.currency,p.bedrooms,p.bathrooms,p.area_sqm::float8 AS "areaSqm",p.address_line AS address,p.city,p.region,p.primary_image_url AS "imageUrl",p.video_url AS "videoUrl",p.latitude::float8 AS latitude,p.longitude::float8 AS longitude,p.created_at AS "createdAt",p.updated_at AS "updatedAt" FROM properties p JOIN agents a ON a.id=p.agent_id WHERE a.user_id=${user.id}::uuid ORDER BY p.updated_at DESC`;
   return json({properties:rows});
 }catch(error){console.error("agent.properties",error);return json({error:"Unable to load listings."},500)}};
 
