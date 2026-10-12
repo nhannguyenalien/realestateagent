@@ -1,0 +1,23 @@
+services:
+  cron:
+    image: alpine:3.20
+    restart: unless-stopped
+    environment:
+      - CRON_SECRET=${CRON_SECRET}
+      - DAILY_SEARCH_URL=https://realestate.schoolsai.work/api/cron/daily-property-search/
+    command:
+      - sh
+      - -c
+      - |
+        apk add --no-cache curl >/dev/null
+        umask 077
+        printf 'CRON_SECRET=%s\nDAILY_SEARCH_URL=%s\n' "$$CRON_SECRET" "$$DAILY_SEARCH_URL" > /etc/estatein.env
+        cat > /usr/local/bin/daily-search.sh <<'EOF'
+        #!/bin/sh
+        . /etc/estatein.env
+        curl -fsS -m 120 -X POST -H "Authorization: Bearer $$CRON_SECRET" "$$DAILY_SEARCH_URL" >/proc/1/fd/1 2>&1 || echo "daily-search failed" >/proc/1/fd/2
+        EOF
+        chmod 700 /usr/local/bin/daily-search.sh
+        echo '0 1 * * * /usr/local/bin/daily-search.sh' > /etc/crontabs/root
+        echo "estatein daily search scheduler started (0 1 * * * UTC)"
+        exec crond -f -l 8

@@ -45,6 +45,8 @@ npm run cron:deploy
 
 The schedule is `0 1 * * *` (01:00 UTC / 08:00 Vietnam time). The same `CRON_SECRET` value must be configured for both Pages and the cron Worker.
 
+**Current setup (Coolify instead of Cloudflare cron).** The Cloudflare Free plan allows only 5 cron triggers per account and this account is at the limit, so the schedule runs on the Coolify VPS instead: service `estatein-daily-search` (project `estatein-cron`) built from `deploy/coolify-daily-search.compose.yml`. It is an Alpine container whose `crond` calls `POST /api/cron/daily-property-search/` at 01:00 UTC with `Authorization: Bearer $CRON_SECRET`. `CRON_SECRET` is a Coolify environment variable and must equal the Pages secret. Check it with `GET /api/v1/services/<uuid>/logs?sub_service_name=cron` on the Coolify API. The Worker files (`workers/`, `wrangler.cron.jsonc`) stay for use on a Workers Paid plan.
+
 ## Deploy
 
 Connect the repository to Cloudflare Pages and use `npm run build` as the build command with `out` as the output directory. The `functions` directory is deployed as Pages Functions automatically.
