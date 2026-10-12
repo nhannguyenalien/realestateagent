@@ -90,3 +90,13 @@ export async function ensureAgent(env:Env,user:Record<string,any>){
   const rows=await sql`INSERT INTO agents(user_id,name,email,avatar_url) VALUES (${user.id}::uuid,${user.name},${user.email},${user.avatarUrl||null}) ON CONFLICT (user_id) DO UPDATE SET updated_at=NOW() RETURNING id::text`;
   return rows[0].id as string;
 }
+
+export function cleanImageList(value:unknown):string[]{
+  if(!Array.isArray(value))return [];
+  return [...new Set(value.map(v=>typeof v==="string"?v.trim():"").filter(v=>v.length>0&&v.length<=1000&&(/^https?:\/\//i.test(v)||v.startsWith("/"))))].slice(0,20);
+}
+export async function replaceImages(env:Env,propertyId:string,urls:string[],alt:string){
+  const sql=db(env);
+  await sql`DELETE FROM property_images WHERE property_id=${propertyId}::uuid`;
+  if(urls.length)await sql`INSERT INTO property_images(property_id,url,alt_text,sort_order) SELECT ${propertyId}::uuid,t.u,${alt},(t.ord-1)::int FROM unnest(${urls}::text[]) WITH ORDINALITY AS t(u,ord)`;
+}

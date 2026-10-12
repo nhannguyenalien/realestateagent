@@ -1,5 +1,5 @@
 import {safeVideoUrl} from "../../../lib/property-media";
-import { currentUser, db, ensureAgent, json, type Env } from "../_shared";
+import { cleanImageList, currentUser, db, ensureAgent, json, replaceImages, type Env } from "../_shared";
 
 export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
   try {
@@ -43,16 +43,18 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
     const baseSlug = title.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 70);
     const slug = `${baseSlug}-${Date.now().toString(36)}`;
     const sql = db(env);
+    const images = cleanImageList(body.images);
     const agentId = await ensureAgent(env, user);
     const rows = await sql`
       INSERT INTO properties (slug, title, description, price, currency, bedrooms, bathrooms,
         property_type, video_url, primary_image_url, city, region, address_line, area_sqm, latitude, longitude, status, agent_id)
       VALUES (${slug}, ${title}, ${textValue(body.description, 5000)}, ${price}, ${textValue(body.currency, 3) || "USD"},
         ${numberValue(body.bedrooms)}, ${numberValue(body.bathrooms)}, ${textValue(body.propertyType, 50) || "Apartment"},
-        ${safeVideoUrl(body.videoUrl)||null}, ${textValue(body.imageUrl, 1000) || "/assets/figma/property-1.png"}, ${city}, ${textValue(body.region, 100)},
+        ${safeVideoUrl(body.videoUrl)||null}, ${images[0] || textValue(body.imageUrl, 1000) || "/assets/figma/property-1.png"}, ${city}, ${textValue(body.region, 100)},
         ${textValue(body.address, 240)}, ${area}, ${numberValue(body.latitude) || null}, ${numberValue(body.longitude) || null}, 'draft', ${agentId}::uuid)
       RETURNING id::text, slug
     `;
+    if (images.length) await replaceImages(env, rows[0].id, images, title);
     const amenityNames = Array.isArray(body.amenities) ? [...new Set(body.amenities.map((a) => textValue(a, 60)).filter(Boolean))].slice(0, 30) : [];
     for (const name of amenityNames) {
       const slug = name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "amenity";
