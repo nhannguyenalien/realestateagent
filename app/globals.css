@@ -149,3 +149,6 @@ footer{margin-top:80px;background:#10131d;color:#fff}.footerMain{max-width:1400p
 @media(max-width:700px){.aiWorkspace{grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr)}.aiHistory{padding:12px;gap:8px;display:grid;grid-template-columns:1fr 1fr;max-height:240px}.aiHistory h1{display:none}.aiHistoryList{grid-column:1/-1;display:flex;gap:8px;max-height:90px}.aiHistoryList>button{min-width:190px;width:190px;margin:0;padding:8px}.aiHistoryList>button small{display:none}.aiHistory>small{grid-column:1/-1}.aiNewChat{font-size:12px;padding:10px}.aiPanel header{padding:14px;min-height:70px}.aiWorkspace .aiMessages{padding:16px}.aiWorkspace .aiPanel form{padding:12px}.aiWorkspace .aiPropertyCards{grid-template-columns:1fr}}
 
 .aiAdvisor:not(.aiWorkspace){z-index:1300}
+
+.rowActions{white-space:nowrap}.rowActions a,.rowActions button,.rowDanger{margin-right:6px;padding:7px 12px;border:1px solid #dcdde1;border-radius:8px;background:#fff;font-size:12px;font-weight:700;cursor:pointer;color:#181a20;text-decoration:none}.rowActions .rowDanger,.rowDanger{color:#c0392b;border-color:#f1c7c2}
+.editModal{position:fixed;inset:0;z-index:80;background:rgba(10,12,18,.55);display:flex;align-items:center;justify-content:center;padding:20px;overflow:auto}.editModal form{background:#fff;border-radius:16px;padding:28px;width:min(720px,100%);max-height:92vh;overflow:auto}
