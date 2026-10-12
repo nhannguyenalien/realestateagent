@@ -15,7 +15,7 @@ const str = (description: string) => ({ type: "string", description });
 const tools = [
   {
     name: "search_properties",
-    description: "Search published real estate listings. Prices are in each listing's own currency. Pass latitude and longitude to search nearest-first within radius_km.",
+    description: "Search published real estate listings. Each result includes videoUrl (null when the listing has no video). Prices are in each listing's own currency. Pass latitude and longitude to search nearest-first within radius_km.",
     inputSchema: {
       type: "object",
       properties: {
@@ -40,7 +40,7 @@ const tools = [
   },
   {
     name: "get_property",
-    description: "Get one published listing by its id (UUID) or slug.",
+    description: "Get one published listing by its id (UUID) or slug, including videoUrl (null when there is no video).",
     inputSchema: { type: "object", properties: { id: str("Listing id or slug.") }, required: ["id"], additionalProperties: false },
   },
   { name: "list_agencies", description: "List agencies with agent and listing counts.", inputSchema: { type: "object", properties: {}, additionalProperties: false } },

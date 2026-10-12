@@ -1,6 +1,7 @@
 import { db, json, type Env } from "../_shared";
 
 import { parseNearby } from "../../../lib/nearby";
+import { safeVideoUrl } from "../../../lib/property-media";
 import { searchNearby } from "../_nearby";
 
 const clean = (value: string | null, max = 160) => {
@@ -12,6 +13,9 @@ const positiveNumber = (value: string | null) => {
   const parsed = Number(value);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
 };
+
+// Only http(s) video links are exposed; listings without a video get videoUrl: null.
+const withVideo = <T extends Record<string, unknown>>(row: T) => ({ ...row, videoUrl: safeVideoUrl(row.videoUrl) ?? null });
 
 function authorized(env: Env, request: Request) {
   const secret = env.SCHOOLSAI_TOOL_SECRET?.trim();
@@ -30,7 +34,7 @@ export async function searchPublishedProperties(env: Env, url: URL): Promise<Res
     const id = clean(url.searchParams.get("id"), 100);
     if (id) {
       const rows = await sql`
-        SELECT p.id::text, p.slug, p.title, p.description, p.price::float8 AS price, p.currency,
+        SELECT p.id::text, p.slug, p.title, to_jsonb(p)->>'video_url' AS "videoUrl", p.description, p.price::float8 AS price, p.currency,
                p.bedrooms, p.bathrooms, p.area_sqm::float8 AS "areaSqm", p.property_type AS "propertyType",
                p.address_line AS address, p.city, p.region, p.country_code AS "countryCode",
                COALESCE(p.primary_image_url, '/assets/figma/property-1.png') AS "imageUrl",
@@ -42,7 +46,8 @@ export async function searchPublishedProperties(env: Env, url: URL): Promise<Res
         LIMIT 1
       `;
       if (!rows[0]) return json({ error: "Published property not found" }, 404);
-      return json({ property: rows[0], data: { property: rows[0] } });
+      const property = withVideo(rows[0]);
+      return json({ property, data: { property } });
     }
 
     const keyword = clean(url.searchParams.get("keyword") || url.searchParams.get("query") || url.searchParams.get("q"));
@@ -66,11 +71,12 @@ export async function searchPublishedProperties(env: Env, url: URL): Promise<Res
     } catch (error) { return json({error: (error as Error).message},400); }
     if (nearby) {
       const rows = await searchNearby(env, nearby, {keyword,location,propertyType,agencySlug,minPrice,maxPrice,minBedrooms,minBathrooms,minArea,maxArea,limit,currency:clean(url.searchParams.get('currency'),3)?.toUpperCase()});
-      return json({properties:rows,count:rows.length,center:nearby,distanceUnit:'km',data:{results:rows,count:rows.length}});
+      const results = rows.map(withVideo);
+      return json({properties:results,count:results.length,center:nearby,distanceUnit:'km',data:{results,count:results.length}});
     }
 
     const rows = await sql`
-      SELECT p.id::text, p.slug, p.title, LEFT(p.description, 800) AS description,
+      SELECT p.id::text, p.slug, p.title, to_jsonb(p)->>'video_url' AS "videoUrl", LEFT(p.description, 800) AS description,
              p.price::float8 AS price, p.currency, p.bedrooms, p.bathrooms,
              p.area_sqm::float8 AS "areaSqm", p.property_type AS "propertyType",
              p.address_line AS address, p.city, p.region, p.country_code AS "countryCode",
@@ -97,7 +103,8 @@ export async function searchPublishedProperties(env: Env, url: URL): Promise<Res
       ORDER BY p.featured_rank ASC, p.published_at DESC NULLS LAST, p.created_at DESC
       LIMIT ${limit}
     `;
-    return json({ properties: rows, count: rows.length, data: { results: rows, count: rows.length } });
+    const results = rows.map(withVideo);
+    return json({ properties: results, count: results.length, data: { results, count: results.length } });
   } catch (error) {
     console.error("ai.properties", error);
     return json({ error: "Unable to search properties" }, 500);
