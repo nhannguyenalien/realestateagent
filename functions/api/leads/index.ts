@@ -13,10 +13,11 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
     }
     const sql = db(env);
     const rows = await sql`
-      INSERT INTO leads (name, email, phone, message, property_id, source)
+      INSERT INTO leads (name, email, phone, message, property_id, assigned_agent_id, source)
       VALUES (${name}, ${body.email.toLowerCase()}, ${typeof body.phone === "string" ? body.phone.trim() : null},
               ${typeof body.message === "string" ? body.message.trim() : null},
-              ${typeof body.propertyId === "string" ? body.propertyId : null}::uuid, 'website')
+              ${typeof body.propertyId === "string" ? body.propertyId : null}::uuid,
+              (SELECT agent_id FROM properties WHERE id = ${typeof body.propertyId === "string" ? body.propertyId : null}::uuid), 'website')
       RETURNING id::text
     `;
     return json({ ok: true, id: rows[0].id }, 201);

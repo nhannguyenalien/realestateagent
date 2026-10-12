@@ -1,0 +1,13 @@
+import {currentUser,db,json,type Env} from "../_shared";
+export const onRequestGet:PagesFunction<Env>=async({env,request})=>{try{
+  const user=await currentUser(env,request);if(!user)return json({error:"Authentication required."},401);
+  const sql=db(env),uid=user.id;
+  const own=sql`(SELECT a.id FROM agents a WHERE a.user_id=${uid}::uuid)`;
+  const [stats,trend,activity,recent]=await Promise.all([
+    sql`SELECT (SELECT COUNT(*)::int FROM properties WHERE agent_id=${own}) AS "totalProperties",(SELECT COUNT(*)::int FROM properties WHERE agent_id=${own} AND status='published') AS "publishedProperties",(SELECT COUNT(*)::int FROM properties WHERE agent_id=${own} AND status='draft') AS "draftProperties",(SELECT COUNT(*)::int FROM properties WHERE agent_id=${own} AND status='archived') AS "archivedProperties",(SELECT COUNT(*)::int FROM leads l LEFT JOIN properties p ON p.id=l.property_id WHERE COALESCE(l.assigned_agent_id,p.agent_id)=${own}) AS "totalLeads",(SELECT COUNT(*)::int FROM leads l LEFT JOIN properties p ON p.id=l.property_id WHERE COALESCE(l.assigned_agent_id,p.agent_id)=${own} AND l.status='new') AS "newLeads"`,
+    sql`WITH months AS (SELECT generate_series(date_trunc('month',NOW())-interval '11 months',date_trunc('month',NOW()),interval '1 month') AS month) SELECT to_char(m.month,'YYYY-MM') AS month,(SELECT COUNT(*)::int FROM properties p WHERE p.agent_id=${own} AND date_trunc('month',p.created_at)=m.month) AS properties,(SELECT COUNT(*)::int FROM leads l LEFT JOIN properties p ON p.id=l.property_id WHERE COALESCE(l.assigned_agent_id,p.agent_id)=${own} AND date_trunc('month',l.created_at)=m.month) AS leads FROM months m ORDER BY m.month`,
+    sql`SELECT * FROM ((SELECT 'property' AS type,title,CONCAT(status,' · ',city) AS detail,created_at AS "createdAt" FROM properties WHERE agent_id=${own} ORDER BY created_at DESC LIMIT 6) UNION ALL (SELECT 'lead',l.name,CONCAT(l.status,' · ',l.email),l.created_at FROM leads l LEFT JOIN properties p ON p.id=l.property_id WHERE COALESCE(l.assigned_agent_id,p.agent_id)=${own} ORDER BY l.created_at DESC LIMIT 6)) events ORDER BY "createdAt" DESC LIMIT 8`,
+    sql`SELECT p.id::text,p.slug,p.title,p.status,p.price::float8 AS price,p.currency,p.city,p.region,p.primary_image_url AS "imageUrl",p.created_at AS "createdAt",COUNT(l.id)::int AS leads FROM properties p LEFT JOIN leads l ON l.property_id=p.id WHERE p.agent_id=${own} GROUP BY p.id ORDER BY p.created_at DESC LIMIT 5`
+  ]);
+  return json({stats:stats[0],trend,activity,recentProperties:recent,generatedAt:new Date().toISOString()});
+}catch(error){console.error("agent.overview",error);return json({error:"Unable to load overview."},500)}};
