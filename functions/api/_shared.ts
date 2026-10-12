@@ -82,3 +82,11 @@ export async function verifyPassword(password:string,expected:string,salt:string
 }
 export async function createSession(env:Env,userId:string){const sql=db(env),token=randomToken(48);await sql`INSERT INTO user_sessions(user_id,token_hash,expires_at) VALUES (${userId}::uuid,${await sha256(token)},NOW()+INTERVAL '30 days')`;return token}
 export function sessionCookie(token:string,request:Request){const secure=new URL(request.url).protocol==="https:"?"; Secure":"";return `estatein_session=${token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=2592000${secure}`}
+
+export async function ensureAgent(env:Env,user:{id:string;name:string;email:string;avatarUrl?:string|null}){
+  const sql=db(env);
+  const existing=await sql`SELECT id::text FROM agents WHERE user_id=${user.id}::uuid LIMIT 1`;if(existing[0])return existing[0].id as string;
+  const linked=await sql`UPDATE agents SET user_id=${user.id}::uuid,updated_at=NOW() WHERE lower(email)=lower(${user.email}) AND user_id IS NULL RETURNING id::text`;if(linked[0])return linked[0].id as string;
+  const rows=await sql`INSERT INTO agents(user_id,name,email,avatar_url) VALUES (${user.id}::uuid,${user.name},${user.email},${user.avatarUrl||null}) ON CONFLICT (user_id) DO UPDATE SET updated_at=NOW() RETURNING id::text`;
+  return rows[0].id as string;
+}
