@@ -35,7 +35,7 @@ async function sendEmail(env:CronEnv,to:string,name:string|null,items:Record<str
   if(!env.RESEND_API_KEY||!env.ALERT_FROM_EMAIL)return false;
   const site=(env.PUBLIC_SITE_URL||"").replace(/\/$/,"");
   const cards=items.map(item=>`<li style="margin:0 0 14px"><a href="${escapeHtml(item.url)}"><strong>${escapeHtml(item.title)}</strong></a><br>${escapeHtml(item.location)} · ${escapeHtml(item.price)} ${escapeHtml(item.currency)} · ${escapeHtml(item.bedrooms)} PN <small>(${escapeHtml(item.source)})</small></li>`).join("");
-  const response=await fetch("https://api.resend.com/emails",{method:"POST",headers:{authorization:`Bearer ${env.RESEND_API_KEY}`,"content-type":"application/json"},body:JSON.stringify({from:env.ALERT_FROM_EMAIL,to:[to],subject:`${items.length} bất động sản mới phù hợp với bạn`,html:`<h2>Chào ${escapeHtml(name||"bạn")},</h2><p>Estatein tìm thấy các BĐS mới phù hợp:</p><ul>${cards}</ul><p><a href="${site}/api/saved-searches/?token=${encodeURIComponent(token)}">Ngừng nhận thông báo</a></p>`})});
+  const response=await fetch("https://api.resend.com/emails",{method:"POST",headers:{authorization:`Bearer ${env.RESEND_API_KEY}`,"content-type":"application/json"},body:JSON.stringify({from:env.ALERT_FROM_EMAIL,to:[to],subject:`${items.length} bất động sản mới phù hợp với bạn`,html:`<h2>Chào ${escapeHtml(name||"bạn")},</h2><p>Realestate Schoolsai tìm thấy các BĐS mới phù hợp:</p><ul>${cards}</ul><p><a href="${site}/api/saved-searches/?token=${encodeURIComponent(token)}">Ngừng nhận thông báo</a></p>`})});
   if(!response.ok)throw new Error(`Resend HTTP ${response.status}`); return true;
 }
 
@@ -49,7 +49,7 @@ export const onRequestPost:PagesFunction<CronEnv>=async({env,request})=>{
       const location=search.location as string|null,type=search.propertyType as string|null,min=Number(search.minPrice)||0,max=Number(search.maxPrice)||0,beds=Number(search.minBedrooms)||0;
       const rows=await sql`
         WITH candidates AS (
-          SELECT p.id,NULL::uuid AS external_id,p.title,p.price::float8 AS price,p.currency,p.bedrooms,concat_ws(', ',p.city,p.region) AS location,${(env.PUBLIC_SITE_URL||"").replace(/\/$/,"")}||'/properties/'||p.slug||'/' AS url,'Estatein' AS source,p.created_at AS seen_at
+          SELECT p.id,NULL::uuid AS external_id,p.title,p.price::float8 AS price,p.currency,p.bedrooms,concat_ws(', ',p.city,p.region) AS location,${(env.PUBLIC_SITE_URL||"").replace(/\/$/,"")}||'/properties/'||p.slug||'/' AS url,'Realestate Schoolsai' AS source,p.created_at AS seen_at
           FROM properties p WHERE p.status='published'
             AND (${location}::text IS NULL OR lower(concat_ws(' ',p.address_line,p.city,p.region)) LIKE '%'||lower(${location})||'%')
             AND (${type}::text IS NULL OR lower(p.property_type)=lower(${type})) AND (${min}=0 OR p.price>=${min}) AND (${max}=0 OR p.price<=${max}) AND p.bedrooms>=${beds}

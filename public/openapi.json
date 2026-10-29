@@ -1,9 +1,9 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Estatein Real Estate API",
+    "title": "Realestate Schoolsai Real Estate API",
     "version": "1.0.0",
-    "description": "REST API of the Estatein real estate platform (Cloudflare Pages Functions). All responses are JSON with `cache-control: no-store`. Endpoints are served under `/api/`. A read-only MCP server is available at `/mcp` (see the README)."
+    "description": "REST API of the Realestate Schoolsai real estate platform (Cloudflare Pages Functions). All responses are JSON with `cache-control: no-store`. Endpoints are served under `/api/`. A read-only MCP server is available at `/mcp` (see the README)."
   },
   "servers": [
     {
@@ -1972,6 +1972,100 @@
           },
           "404": {
             "description": "Not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/leads/{id}/": {
+      "patch": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Change a lead status",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "status"
+                ],
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "new",
+                      "contacted",
+                      "qualified",
+                      "closed",
+                      "lost"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid status.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Administrator access required.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Lead not found.",
             "content": {
               "application/json": {
                 "schema": {

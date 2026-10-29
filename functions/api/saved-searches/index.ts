@@ -43,7 +43,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
   try {
     const sql = db(env);
     await sql`UPDATE saved_property_searches SET active=false,updated_at=NOW() WHERE unsubscribe_token=${token}`;
-    return new Response("<!doctype html><meta charset='utf-8'><title>Estatein</title><body style='font:16px system-ui;max-width:620px;margin:80px auto;padding:20px'><h1>Đã dừng thông báo</h1><p>Bạn sẽ không còn nhận email từ bộ lọc bất động sản này.</p><a href='/search/'>Quay lại trang tìm kiếm</a></body>", { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" } });
+    return new Response("<!doctype html><meta charset='utf-8'><title>Realestate Schoolsai</title><body style='font:16px system-ui;max-width:620px;margin:80px auto;padding:20px'><h1>Đã dừng thông báo</h1><p>Bạn sẽ không còn nhận email từ bộ lọc bất động sản này.</p><a href='/search/'>Quay lại trang tìm kiếm</a></body>", { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" } });
   } catch (error) {
     console.error("saved-searches.unsubscribe-page", error);
     return new Response("Unable to unsubscribe.", { status: 500 });

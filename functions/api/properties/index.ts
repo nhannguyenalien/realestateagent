@@ -15,7 +15,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
              area_sqm::float8 AS "areaSqm", latitude::float8, longitude::float8
       FROM properties
       WHERE status = 'published'
-        AND (${q}::text IS NULL OR CONCAT(title,' ',city,' ',region) ILIKE '%' || ${q} || '%')
+        AND (${q}::text IS NULL OR CONCAT(title,' ',city,' ',region,' ',address_line) ILIKE '%' || ${q} || '%')
         AND (${type}::text IS NULL OR property_type = ${type}) AND bedrooms >= ${bedrooms}
         AND (${minPrice}=0 OR price >= ${minPrice}) AND (${maxPrice}=0 OR price <= ${maxPrice})
       ORDER BY featured_rank ASC, published_at DESC

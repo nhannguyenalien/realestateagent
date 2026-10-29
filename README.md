@@ -1,4 +1,4 @@
-# Estatein
+# Realestate Schoolsai
 
 Figma-inspired real-estate landing page built with a statically exported Next.js frontend, Cloudflare Pages Functions API, and Neon Postgres.
 
@@ -31,7 +31,7 @@ CRON_SECRET=<long-random-value>
 PUBLIC_SITE_URL=https://your-domain.example
 EXTERNAL_PROPERTY_FEEDS=[{"name":"partner","url":"https://partner.example/feed.json","token":"optional"}]
 RESEND_API_KEY=<optional>
-ALERT_FROM_EMAIL=Estatein <alerts@your-domain.example>
+ALERT_FROM_EMAIL=Realestate Schoolsai <alerts@your-domain.example>
 ```
 
 External feeds may return either a JSON array or `{ "items": [...] }`. Each item supports `id`, `url`, `title`, `description`, `propertyType`, `price`, `currency`, `bedrooms`, `bathrooms`, `areaSqm`, `address`, `city`, `region`, `imageUrl`, and ISO `publishedAt`. Only configure sources whose API/feed or crawl terms permit this use.

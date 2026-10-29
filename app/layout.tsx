@@ -5,8 +5,8 @@ import { AiAdvisor } from "@/components/ai-advisor";
 import { LoadingScreen } from "@/components/loading-screen";
 
 export const metadata: Metadata = {
-  title: "Estatein — Find Your Dream Property",
-  description: "Explore curated homes and investment properties with Estatein.",
+  title: "Realestate Schoolsai — Find Your Dream Property",
+  description: "Explore curated homes and investment properties with Realestate Schoolsai.",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
