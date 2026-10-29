@@ -2,7 +2,6 @@ import type { ReactNode } from "react";
 import { Page } from "@/components/site-chrome";
 
 const updated = "October 12, 2026";
-const contact = "hello@estatein.vn";
 
 function Legal({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -35,11 +34,11 @@ export function PrivacyPolicyPage() {
       <h2>Sharing</h2>
       <p>Enquiries are shared with the agent or agency responsible for the property. We use service providers for hosting and database (Cloudflare, Neon), file storage, email delivery and AI responses; they process data only to provide those services.</p>
       <h2>Retention and your choices</h2>
-      <p>We keep data while your account is active or as needed to provide the service. You can unsubscribe from alerts with the link in each email, and you can ask us to access, correct or delete your data by emailing <a href={`mailto:${contact}`}>{contact}</a>.</p>
+      <p>We keep data while your account is active or as needed to provide the service. You can unsubscribe from alerts with the link in each email, and you can ask us to access, correct or delete your data by contacting us through the <a href="/contact/">contact page</a>.</p>
       <h2>Security</h2>
       <p>Data is transmitted over HTTPS and sessions use secure, HttpOnly cookies or tokens. No system is perfectly secure, so we cannot guarantee absolute security.</p>
       <h2>Contact</h2>
-      <p>Questions about this policy: <a href={`mailto:${contact}`}>{contact}</a>.</p>
+      <p>Questions about this policy: please use the <a href="/contact/">contact page</a>.</p>
     </Legal>
   );
 }
@@ -59,7 +58,7 @@ export function TermsPage() {
       <h2>Liability</h2>
       <p>The service is provided &ldquo;as is&rdquo;. To the extent permitted by law, Realestate Schoolsai is not liable for indirect or consequential losses arising from your use of the service.</p>
       <h2>Changes and contact</h2>
-      <p>We may update these terms; continued use means you accept the changes. Contact: <a href={`mailto:${contact}`}>{contact}</a>.</p>
+      <p>We may update these terms; continued use means you accept the changes. Contact: please use the <a href="/contact/">contact page</a>.</p>
     </Legal>
   );
 }
