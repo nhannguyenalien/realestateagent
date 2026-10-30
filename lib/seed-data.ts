@@ -1,6 +1,6 @@
 import type { Property } from "@/types/property";
 
-const agent = { id: "agent-linh", name: "Linh Nguyễn", role: "Senior Property Advisor", phone: "+84 28 7300 8866", email:"", avatarUrl: "/assets/figma/about/7.png" };
+const agent = { id: "agent-linh", name: "Linh Nguyễn", role: "Senior Property Advisor", phone:"", email:"", avatarUrl: "/assets/figma/about/7.png" };
 const amenities = ["Swimming pool", "Private parking", "24/7 security", "Air conditioning", "Furnished", "Garden", "High-speed internet", "Pet friendly"];
 
 export const featuredProperties: Property[] = [
@@ -14,7 +14,7 @@ export const featuredProperties: Property[] = [
 
 export const agents = [
   agent,
-  { id:"agent-minh",name:"Minh Trần",role:"Investment Property Advisor",phone:"+84 24 7300 2288",email:"",avatarUrl:"/assets/figma/about/8.png" },
-  { id:"agent-an",name:"An Phạm",role:"Luxury Homes Specialist",phone:"+84 28 7300 3399",email:"",avatarUrl:"/assets/figma/about/9.png" },
-  { id:"agent-mai",name:"Mai Hoàng",role:"Residential Leasing Advisor",phone:"+84 236 730 4488",email:"",avatarUrl:"/assets/figma/about/2.png" },
+  { id:"agent-minh",name:"Minh Trần",role:"Investment Property Advisor",phone:"",email:"",avatarUrl:"/assets/figma/about/8.png" },
+  { id:"agent-an",name:"An Phạm",role:"Luxury Homes Specialist",phone:"",email:"",avatarUrl:"/assets/figma/about/9.png" },
+  { id:"agent-mai",name:"Mai Hoàng",role:"Residential Leasing Advisor",phone:"",email:"",avatarUrl:"/assets/figma/about/2.png" },
 ];
